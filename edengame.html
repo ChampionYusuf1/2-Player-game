@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <canvas id="canvas" width="500px" height="700px" style="border: 1px solid black;" tabindex="1" autofocus></canvas>
+    <p id="coordinateValues">Coordinates - x: 0, y: 0</p>
+    <script>
+        //Canvas API: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+        const canvas = document.getElementById("canvas")
+        const ctx = canvas.getContext("2d")
+        let time = 0;
+
+
+
+        let square = {
+            xPos: 150,
+            yPos: 300,
+            width: 50,
+            height: 50,
+            xVel: 0,
+            yVel: 0,
+            health: 100,
+            mana: 0,
+        }
+        let square2 = {
+            xPos: 300,
+            yPos: 300,
+            width: 50,
+            height: 50,
+            xVel: 0,
+            yVel: 0,
+            health: 100,
+            mana: 0,
+
+        }
+        let spell2 = {
+            xPos: -20,
+            yPos : 0,
+            width : 10,
+            active : false,
+            height: 10,
+            xVel: 0,
+            yVel: 0,
+
+        }
+        let spell1 = {
+            xPos: 700,
+            yPos : 0,
+            width : 10,
+            active : false,
+            height: 10,
+            xVel: 0,
+            yVel: 0,
+
+        }
+
+        let spell3 = {
+            xPos: 700,
+            yPos : 0,
+            width : 40,
+            active : false,
+            radius : 10,
+            height: 25,
+            xVel: 0,
+            yVel: 0,
+
+        }
+        let spell4 = {
+            xPos: -40,
+            yPos : 0,
+            width : 40,
+            active : false,
+            radius : 10,
+            height: 25,
+            xVel: 0,
+            yVel: 0,
+
+        }
+
+        window.setInterval(manaregen, 1000)
+        window.setInterval(manaregen2, 1000)
+
+        let prevTimeStamp = 0
+
+        let ongstat = new Image()
+        ongstat.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAEDSURBVGhD7dcxCsJAEAXQrGIjnkKx8hJWVgbBI9hYegSxt7G08QiCxMp7WImeQmxEYoqBFBmWkSzJj/zX+BslA/M3ruufpmlk8JidJVUrez5Jfi35bDwOguZvBlHLXlexrbQDgKuFhoOgMb/Zk08sqVpxO5Hkx9VCw0HQlCr7aL6UlLse95L8rN9l2ZuKg6Axl10T+m1vLbaGq4WGg6BRy36/PSVhGgx7knJcLTQcBI1Lt+NC2bUy1XUAWJ+Fq4WGg6Bx2T25UHbr3+nQB4BWbI12feBqoeEgaErd2TvriaQw3puLpN9xtdBwEDTmsi92L0l+h1VXkl/o3+NqoeEgWKLoC+N/RDDX/5zfAAAAAElFTkSuQmCC"
+
+        let ongright = new Image()
+        ongright.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAEJSURBVGhD7dc9CsJAEAXgRLERT6FYeQkrK4PgEWwsPYLY21jaeARBYuU9UomeQmxEYoqBYDIuI4T1Rd7X5DX5GZjZzYbdwzgNDK6ToyS/su+T5NaQa+2xEDR/U4g67L8abCttAWBroWEhaMw7e/yMJPkVNWNJbmwtNCwETeXDPpjOJeWS/VaSm3Yvf+PrioWggdrZrbu4hq2FhoWgUYf9cr5JwtTrdyTl2FpoWAiaMF0PS8OuDZOPBUB7r0b7FrYWGhaCJszO06Vht/5OV70AWIddO1KwtdCwEDTmM7umtRxJqsZjdZL0PbYWGhaCxjzss81dkttu0Zb0znp/0afnFbG10LAQLEHwAgNIQjA3c3/9AAAAAElFTkSuQmCC"
+
+        let ongleft = new Image()
+        ongleft.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAEGSURBVGhD7dc9CsJQEATgRLERT6FYeQkrK4PgEWwsPYLY21jaeARBYuU9rERPITYiMcVAiixhAyFOZL4m0+RnYfe9vLB/miaBw2N2RqpX+n1IxVq4Np4KYfM3hZjD/qvB9rIWALUWGxXCxr2zx58IqV5RO0YqptZio0LYVD7so/kSKXM97pGKWffqN76pVAgbqp3du4tb1FpsVAgbc9jvtycSp8Gwh5RRa7FRIWzCZDvODbs1THUsANZ7Lda3qLXYqBA2YXqezg2793e66gXAO+zWkUKtxUaFsHGf2S2d9QSpGu/NBak8tRYbFcLGPeyL3QupvMOqi5TxPs+616LWYqNCuATBF87dQjDYtt8tAAAAAElFTkSuQmCC"
+
+        let ongup = new Image()
+        ongup.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAD3SURBVGhD7dcxCsJQEATQfMVGPIXiPaysDN7BC3gEsbextPEIgsTKe1iJnkJsRKLFQooMYYMhGcO8xmmUDOz+b8LwOEsjh/v8ZKle3+ezVKxjn39PRdi0pghc9qYW2wsdABotNirCxn2zJ+/YUr3ibmKpmEaLjYqwURE2KsKmNUXcNztS9W3vvcURjRYbFWEDl/12fVjiNBoPLGU0WmxUhE1IN5PcsqNlauoA8D6LRouNirAJl8Mut+zev9NVHwBosRH0+qDRYqMibH56Z++tppaq8VqfLZWn0WKjImzcy77YPi2Vt1/2LWW8v4e+i2i02KgIlyj6ANA+ORM8jnfUAAAAAElFTkSuQmCC"
+
+        let ongdown = new Image()
+        ongdown.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAEHSURBVGhD7dcxCsJAEAXQjWIjnkKx8hJWVgbBI9hYegSxt7G08QiCxMp7WImeQmxEYoqBFBmWkSzJj/zX+JuEDMzfmKh/mqbO4DE7S6pW9nyS/Fry23gcBM3fDKKWva5iW2kHAFcLDQdBY36zJ59YUrXidiLJj6uFhoOgKVX20XwpKXc97iX5Wa9l2ZuKg6Axl10T+m1vLbaGq4WGg6BRy36/PSVhGgx7knJcLTQcBE2UbseFsmtlqusAsD4LVwsNB0ETZd/JhbJb/06HPgC0Ymu0zweuFhoOgqbUN3tnPZEUxntzkfQ7rhYaDoLGXPbF7iXJ77DqSspZr9Vo99NwtdBwECzOfQEJwkQwcGM/zgAAAABJRU5ErkJggg=="
+
+        let prpstat = new Image()
+        prpstat.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAECSURBVGhD7dcxCsJAEAXQrGLjMWy9hyAYBCtrG+08QsgR7LSx0cJKkFh5D1uPYSOiKQZSZFhGsiQ/8l/jb5QMzN+4bnCZfCKDx/QqqV7580ny68hn63EQNH8ziFr2poptpR0AXC00HASN+c2evWNJ9Yq7mSQ/rhYaDoKmUtmHs6Wkwv28k+Rn/S7L3lYcBI257JrQb3trsTVcLTQcBI1a9nQ7l4QpWZ0kFbhaaDgIGncYH0tl18rU1AFgfRauFhoOgsbl9+RS2a1/p0MfAFqxNdr1gauFhoOgqXRn7yUjSWG80puk33G10HAQNOayLzZPSX77dV+SX+jf42qh4SBYougLTmVD9VknUcIAAAAASUVORK5CYII="
+
+        let prpright = new Image()
+        prpright.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAEGSURBVGhD7dc9CsJQEATgRLHxGLbeQxAMgpW1jXYeIeQIdtrYaGElSFJ5D1uPYSOiKRZekeWxkvCcyHyN0yRmYDc/8eAyeUcG92khKazy+iT5deS39VgEzd8UUZf9V4ttpd0AOFpoWASN+cmevxJJYSXdXJIfRwsNi6Cp9Rp/O+8k+Q1nS0mO9Vgue1uxCBrzsmtCPO257G3FImjUZc+2c0mY0tVJksPRQsMiaOLD+FhZdm2ZNCFuCtq1aP/L0ULDImji8tu5suzWV+eml916k9E+HzhaaFgETa1v9l46ktSMZ3aV9D2OFhoWQWNe9sXmIclvv+5LcqzHarTzaThaaFgESxR9AGj0QvVm+/m1AAAAAElFTkSuQmCC"
+
+        let prpleft = new Image()
+        prpleft.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAEGSURBVGhD7de9CoJwFAVwLVp6jNbeIwiSoKm5pbYeQXyEtlpaamgKQqfeo7XHaIkohwtS3uSK8u8Y57d0Fs0D9/rh906jp2dwHSeS3EqvT1Kxlvw2Houg+Zsi6rL/arGttBsARwsNi6AxP9njRyDJraAdSyrG0ULDImgqvcZfjhtJxfqTuaSM9Vgue1OxCBrzsmtcPO257E3FImjUZY/WU0mYwsVBUoajhYZF0Pi74T637NoyaVzcFLRr0f6Xo4WGRdD46bdzbtmtr851L7v1JqN9PnC00LAImkrf7J1wIKke9+gsqTyOFhoWQWNe9tnqJqmc7bIr6Z31fN+O/8TRQsMiWDzvBTFQQvVn0QYPAAAAAElFTkSuQmCC"
+
+        let prpup = new Image()
+        prpup.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAD2SURBVGhD7dcxCsJQEATQRLHxGB5GEAy21lZ2HiHkCHba2GhhJUisvIdtjmEjohYLKTJ8VgzJGOY1TqNkYPd/E4/O01fkUMwulpr1eT5LYT37/HsqwqYzReCyt7XYXugA0GixURE27ps9fyaWmpX0c0thGi02KsJGRdioCJvOFHHf7Ejdt733Fkc0WmxUhA1c9mwzt8QpXR4tlTRabFSETbyfHCrLjpaprQPA+ywaLTYqwia+nbaVZff+na77AECLjaDXB40WGxVh89M7+yAdW6rHI7ta+p5Gi42KsHEv+2J9txS2Ww0tlbzfRdDvIRotNirCJYredyQ42J6Vkf4AAAAASUVORK5CYII="
+
+        let prpdown = new Image()
+        prpdown.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAEFSURBVGhD7dexCoJgFAVgLVp6jNbeIwiSoKm5pbYeQXyEtlpaamgKQqfeo7XHaIkohwsOXn6u+KPHON/SWRQv3POb4eg2+wYGz3kmqVn580ly68lv53EQNH8ziFr2toptpR0AXC00HASN+c2efiJJzYr6qSQ3rhYaDoKmVtnHi7WkwuN6kORmvZZl7yoOgsZcdo3vt7212BquFhoOgkYte7JfSsIUby6SClwtNBwETXianktl18rU1gFgfRauFhoOgibMv5NLZbf+nfZ9AGjF1mifD1wtNBwETa1v9kE8keTHO7lLqo6rhYaDoDGXfbV7SaruuB1KKljvp12r4Wqh4SBYguAHOJlD9R09NVAAAAAASUVORK5CYII="
+
+
+        window.requestAnimationFrame(gameLoop)
+        function gameLoop(currentTimeStamp) {
+            let timeElapsed = (currentTimeStamp - prevTimeStamp) / 1000
+            prevTimeStamp = currentTimeStamp
+            ctx.clearRect(0, 0, 700, 700)
+            //velocity for player 1 and then 2
+            square.xPos = square.xPos + square.xVel*timeElapsed
+            square.yPos = square.yPos + square.yVel*timeElapsed
+
+            square2.xPos = square2.xPos + square2.xVel*timeElapsed
+            square2.yPos = square2.yPos + square2.yVel*timeElapsed
+
+            //velocity for spell function
+            spell2.xPos = spell2.xPos + spell2.xVel*timeElapsed
+            spell2.yPos = spell2.yPos + spell2.yVel*timeElapsed
+
+            spell1.xPos = spell1.xPos + spell1.xVel*timeElapsed
+            spell1.yPos = spell1.yPos + spell1.yVel*timeElapsed
+
+            spell3.width = spell3.width + spell3.xVel*timeElapsed
+            spell3.yPos = spell3.yPos + spell3.yVel*timeElapsed
+            spell3.xPos = spell3.xPos + spell3.xVel * timeElapsed
+
+            spell4.width = spell4.width + spell4.xVel*timeElapsed
+            spell4.yPos = spell4.yPos + spell4.yVel*timeElapsed
+            spell4.xPos = spell4.xPos + spell4.xVel * timeElapsed
+
+
+
+
+            //keyboard input for player 1
+
+            if(kbInput.left.isPressed && kbInput.right.isPressed){
+                square2.xVel = 0
+            }else if(kbInput.right.isPressed){
+                square2.xVel = 250
+            }else if(kbInput.left.isPressed){
+                square2.xVel = -250
+            }else{
+                square2.xVel = 0
+            }
+            if(kbInput.up.isPressed && kbInput.down.isPressed){
+                square2.yVel = 0
+            }else if(kbInput.up.isPressed){
+                square2.yVel = -250
+            }else if(kbInput.down.isPressed){
+                square2.yVel = 250
+            }else{
+                square2.yVel = 0
+            }
+            //kb input for player 2
+            if(kbInput.w.isPressed && kbInput.s.isPressed){
+                square.yVel = 0
+            }else if(kbInput.w.isPressed){
+                square.yVel = -250
+            }else if(kbInput.s.isPressed){
+                square.yVel = 250
+            }else{
+                square.yVel = 0
+            }
+            if(kbInput.a.isPressed && kbInput.d.isPressed){
+                square.xVel = 0
+            }else if(kbInput.a.isPressed){
+                square.xVel =-250
+            }else if(kbInput.d.isPressed){
+                square.xVel = 250
+            }else{
+                square.xVel = 0
+            }
+            //keyboard input for spell
+            if(spell2.xPos < -10){
+                if(kbInput.l.isPressed) {
+                    if(square2.mana > 0){
+                        spell2.xPos = square2.xPos - 20
+                        spell2.yPos = square2.yPos + 25
+                        spell2.xVel = -500
+                        spell2.yVel = 1
+                        square2.mana = square2.mana - 0.5
+                    }}
+            }
+            if(spell4.xPos < -10){
+                if(kbInput.k.isPressed)
+                    if(square2.mana >0){{
+                        spell4.width = 10
+                        spell4.xPos = square2.xPos + 10
+                        spell4.yPos = square2.yPos + 25
+                        spell4.xVel = -300
+                        spell4.yVel = 0
+                        square2.mana = square2.mana - 1.5
+                    }}
+            }
+            if(spell1.xPos > 510){
+                if(kbInput.f.isPressed)
+                    if(square.mana >0){{
+                        spell1.xPos = square.xPos + 20
+                        spell1.yPos = square.yPos + 25
+                        spell1.xVel = 600
+                        spell1.yVel = 0
+                        square.mana = square.mana - 0.5
+                    }}
+            }
+            if(spell3.xPos > 510){
+                if(kbInput.r.isPressed)
+                    if(square.mana >0){{
+                        spell3.width = 10
+                        spell3.xPos = square.xPos + 20
+                        spell3.yPos = square.yPos + 25
+                        spell3.xVel = 300
+                        spell3.yVel = 0
+                        square.mana = square.mana - 1.5
+                    }}
+            }
+            //collide function
+            if(didRectRectColl(square, spell2)){
+                spell2.xPos = -2000
+                square.health = square.health - 5
+            }
+            if(didRectRectColl(square2, spell1)){
+                spell1.xPos = 2000
+                square2.health = square2.health - 5
+            }
+            if(didRectRectColl(square2, spell3)){
+                spell3.xPos = 2000
+                square2.health = square2.health - 15
+            }
+            if(didRectRectColl(square, spell4)){
+                spell4.xPos = -2000
+                square.health = square.health - 15
+            }
+            //boundaries for player 1
+            if(square.xPos > 200){
+                square.xPos = 199
+            }
+
+            if(square.xPos < 0){
+                square.xPos = 0
+            }
+            if(square.yPos > 550){
+                square.yPos = 550
+            }
+            if(square.yPos < 100){
+                square.yPos = 100
+            }
+            //boundaries for player 2
+            if(square2.xPos > 450){
+                square2.xPos = 450
+            }if(square2.xPos <250){
+                square2.xPos = 251
+            }if(square2.yPos > 550){
+                square2.yPos = 550
+            }if(square2.yPos < 100){
+                square2.yPos = 100
+            }if(square.health < 0){
+                square.yPos = -2000
+            }if(square2.health < 0){
+                square2.yPos = -2000
+            }
+
+
+
+            console.log("mana: "+square.mana)
+            console.log("mana: "+square2.mana)
+            console.log(kbInput.r.isPressed)
+
+
+
+            ctx.fillStyle = "#00a2e8";
+            ctx.beginPath();
+            ctx.fillRect(0, 0, 500 , 100 );
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#2c4261";
+            ctx.beginPath();
+            ctx.fillRect(0, 600, 500 , 100 );
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#22b14c";
+            ctx.beginPath();
+            ctx.fillRect(0, 100, 249 , 500 );
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#22b14c";
+            ctx.beginPath();
+            ctx.fillRect(251, 100, 249 , 500 );
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#a349a4";
+            ctx.beginPath();
+            ctx.fillRect(31, 630, 188 , 39 );
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#a349a4";
+            ctx.beginPath();
+            ctx.fillRect(281, 630, 188 , 39 );
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+
+
+            ctx.fillStyle = "#FFF200";
+            ctx.beginPath();
+            ctx.arc(500,0,35,  0, 2 * Math.PI);
+
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(spell2.xPos, spell2.yPos, spell2.width, spell2.height)
+            ctx.fillRect(spell1.xPos, spell1.yPos, spell1.width, spell1.height)
+            ctx.fillRect(spell3.xPos, spell3.yPos, spell3.width, spell3.height)
+            ctx.fillRect(spell4.xPos, spell4.yPos, spell4.width, spell4.height)
+
+            ctx.fillStyle = "#ff7f27";
+            ctx.beginPath();
+            ctx.fillRect(square.xPos + 1, square.yPos + 1, 48, 48);
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#a349a4";
+            ctx.beginPath();
+            ctx.fillRect(square2.xPos + 1, square2.yPos + 1, 48, 48);
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            if(healthbar(square) === 5){
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(34, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(71, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(108, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(145, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(182, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(healthbar(square) === 4) {
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(34, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(71, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(108, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(145, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(healthbar(square) === 3){
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(34, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(71, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(108, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(healthbar(square) === 2){
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(34, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(71, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }else if(healthbar(square) === 1){
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(34, 636, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }
+
+
+
+
+            if(healthbar2(square2) === 5){
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(284, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(321, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(358, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(395, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(432, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(healthbar2(square2) === 4) {
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(284, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(321, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(358, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(395, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(healthbar2(square2) === 3){
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(284, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(321, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(358, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(healthbar2(square2) === 2){
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(284, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(321, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }else if(healthbar2(square2) === 1){
+                ctx.fillStyle = "#ff2b2b";
+                ctx.beginPath();
+                ctx.fillRect(284, 636, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }
+            if(manabar(square) === 5){
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(34, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(71, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(108, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(145, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(182, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(manabar(square) === 4) {
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(34, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(71, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(108, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(145, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(manabar(square) === 3){
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(34, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(71, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(108, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(manabar(square) === 2){
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(34, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(71, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }else if(manabar(square) === 1){
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(34, 653, 33, 10);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            if(manabar2(square2) === 5){
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(284, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(321, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(358, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(395, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(432, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(manabar2(square2) === 4) {
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(284, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(321, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(358, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(395, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(manabar2(square2) === 3){
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(284, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(321, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(358, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            } else if(manabar2(square2) === 2){
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(284, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(321, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }else if(manabar2(square2) === 1){
+                ctx.fillStyle = "#1c8dff";
+                ctx.beginPath();
+                ctx.fillRect(284, 653, 33 , 10 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+            }
+            //sprite
+            if(square.xVel === 0){
+                ctx.drawImage(ongstat, square.xPos, square.yPos, 50, 50)
+            }if(square.yVel === 0){
+                ctx.drawImage(ongright, square.xPos, square.yPos, 50, 50)
+            }if(square.yVel < 0){
+                ctx.drawImage(ongup, square.xPos, square.yPos, 50, 50)
+            }if(square.yVel > 0){
+                ctx.drawImage(ongdown, square.xPos, square.yPos, 50, 50)
+            }if(square.xVel < 0){
+                ctx.drawImage(ongleft, square.xPos, square.yPos, 50, 50)
+            }
+            if(square2.xVel === 0){
+                ctx.drawImage(prpstat, square2.xPos, square2.yPos, 50, 50)
+            }if(square2.yVel === 0){
+                ctx.drawImage(prpright, square2.xPos, square2.yPos, 50, 50)
+            }if(square2.yVel < 0){
+                ctx.drawImage(prpup, square2.xPos, square2.yPos, 50, 50)
+            }if(square2.yVel > 0){
+                ctx.drawImage(prpdown, square2.xPos, square2.yPos, 50, 50)
+            }if(square2.xVel < 0) {
+                ctx.drawImage(prpleft, square2.xPos, square2.yPos, 50, 50)
+            }
+
+
+
+            window.requestAnimationFrame(gameLoop)
+        }
+
+
+        function manaregen()
+        {
+            {square.mana = (square.mana + 1)  }
+            if (square.mana > 5  ) square.mana = 5
+        }
+        function manaregen2()
+        {
+            {square2.mana = (square2.mana + 1)  }
+            if (square2.mana > 5  ) square2.mana = 5
+        }
+
+
+        function didRectRectColl(square, spell2){ //https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+            if (square.xPos < spell2.xPos + spell2.width &&
+                square.xPos + square.width > spell2.xPos &&
+                square.yPos < spell2.yPos + spell2.height &&
+                square.yPos + square.height > spell2.yPos) {
+                return true
+            }else{
+                return false
+            }
+        }
+
+        function healthbar(square){
+            if(square.health <= 100 && square.health > 80){
+                return 5
+            }else if(square.health <= 80 && square.health > 60){
+                return 4
+            }else if(square.health <= 60 && square.health > 40){
+                return 3
+            }else if(square.health <= 40 && square.health > 20){
+                return 2
+            }else if(square.health <= 20 && square.health > 0){
+                return 1
+            }else if(square.health <= 0){
+                return 0
+            }
+        }
+        function healthbar2(square2){
+            if(square2.health <= 100 && square2.health > 80){
+                return 5
+            }else if(square2.health <= 80 && square2.health > 60){
+                return 4
+            }else if(square2.health <= 60 && square2.health > 40){
+                return 3
+            }else if(square2.health <= 40 && square2.health > 20){
+                return 2
+            }else if(square2.health <= 20 && square2.health > 0){
+                return 1
+            }else if(square2.health <= 0){
+                return 0
+            }
+        }
+        function manabar(square){
+            if(square.mana <= 5 && square.mana > 4){
+                return 5
+            }else if(square.mana <= 4 && square.mana > 3){
+                return 4
+            }else if(square.mana <= 3 && square.mana > 2){
+                return 3
+            }else if(square.mana <= 2 && square.mana > 1){
+                return 2
+            }else if(square.mana <= 1 && square.mana > 0){
+                return 1
+            }else if(square.mana <= 0){
+                return 0
+            }
+        }
+
+        function manabar2(square2){
+            if(square2.mana <= 5 && square2.mana > 4){
+                return 5
+            }else if(square2.mana <= 4 && square2.mana > 3){
+                return 4
+            }else if(square2.mana <= 3 && square2.mana > 2){
+                return 3
+            }else if(square2.mana <= 2 && square2.mana > 1){
+                return 2
+            }else if(square2.mana <= 1 && square2.mana > 0){
+                return 1
+            }else if(square2.mana <= 0){
+                return 0
+            }
+        }
+
+
+
+        //Mouse Input Stuff
+        let xCoord = 0
+        let yCoord = 0
+        function getCursorPosition(canvas, event) {
+            const rect = canvas.getBoundingClientRect()
+            xCoord = event.clientX - rect.left
+            yCoord = event.clientY - rect.top
+            document.getElementById("coordinateValues").innerHTML = "Coordinates - x: "+xCoord+", y: "+yCoord
+
+        }
+
+        canvas.addEventListener('mousemove', function(e) { getCursorPosition(canvas, e)})
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        // Keyboard Input
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        canvas.addEventListener('keydown', keyHandler)
+        canvas.addEventListener('keyup', keyHandler)
+
+
+        let kbInput = {
+            left : {
+                value : "ArrowLeft",
+                isPressed: false,
+            },
+            right : {
+                value : "ArrowRight",
+                isPressed: false,
+            },
+            down : {
+                value : "ArrowDown",
+                isPressed: false,
+            },
+            up : {
+                value : "ArrowUp",
+                isPressed: false,
+            },
+            w : {
+                value : "w",
+                isPressed: false,
+            },
+            a : {
+                value : "a",
+                isPressed: false,
+            },
+            s : {
+                value : "s",
+                isPressed: false,
+            },
+            d : {
+                value : "d",
+                isPressed: false,
+            },
+            l: {
+                value : "l",
+                isPressed: false,
+            },
+            f: {
+                value : "f",
+                isPressed: false,
+            },
+            r: {
+                value : "r",
+                isPressed: false,
+            },
+            k: {
+                value : "k",
+                isPressed: false,
+            }
+
+
+        }
+
+
+
+        function keyHandler(event) {
+            event.preventDefault()
+            let type = event.type
+            let isPressed = false
+            if(type==="keydown"){
+                isPressed = true
+            }
+            if(event.key===kbInput.left.value){
+                kbInput.left.isPressed = isPressed
+            }
+            if(event.key===kbInput.right.value){
+                kbInput.right.isPressed = isPressed
+            }
+            if(event.key===kbInput.up.value){
+                kbInput.up.isPressed = isPressed
+            }
+            if(event.key===kbInput.down.value){
+                kbInput.down.isPressed = isPressed
+            }
+            if(event.key===kbInput.w.value){
+                kbInput.w.isPressed = isPressed
+            }
+            if(event.key===kbInput.a.value){
+                kbInput.a.isPressed = isPressed
+            }
+            if(event.key===kbInput.s.value){
+                kbInput.s.isPressed = isPressed
+            }
+            if(event.key===kbInput.d.value){
+                kbInput.d.isPressed = isPressed
+            }
+            if(event.key===kbInput.l.value){
+                kbInput.l.isPressed = isPressed
+            }
+            if(event.key===kbInput.f.value){
+                kbInput.f.isPressed = isPressed
+            }
+            if(event.key===kbInput.r.value){
+                kbInput.r.isPressed = isPressed
+            }
+            if(event.key===kbInput.k.value){
+                kbInput.k.isPressed = isPressed
+            }
+        }
+
+    </script>
+    <p> The left side uses controls W,A,S,D to move up,left,righ, and down respectively. The Left player uses R and F to shoot. The Right player uses K and L to shoot as well, however, K doesnt work as intended as of right now.</p>
+    <p> This is a 2 player game in which your goal is to shoot the other player until they die. They have an attack that does damage to each players respective health represented by the health bars at the bottom. There is a mana requirement to attack. Mana is gradually regenerated throughout the game and is represented at the bottom of the user interface. Once someone dies, the game ends and is represented when the player who has died disappeared.
+    </p>
+</head>
+<body></body>
+</html>
